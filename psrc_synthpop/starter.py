@@ -57,6 +57,7 @@ class Starter:
                                               #tract_size_attr="B08201_001E",
                                               #tract=tract)
         # HS
+        # read the marginals
         h_acs = pd.read_csv('data/HHmarginals.csv', dtype={
                                                   "state": "int32",
                                                   "county": "int32",
@@ -70,6 +71,7 @@ class Starter:
             "block group": "object"
         })
         
+        # reduce the datasets if county and tract are specified
         if state is not None:
             state_id, county_id = c.try_fips_lookup(state, county)
             h_ind = h_acs['state'] == int(state_id)
@@ -77,20 +79,21 @@ class Starter:
             if county is not None:
                 h_ind = logical_and(h_ind, h_acs['county'] == int(county_id))
                 p_ind = logical_and(p_ind, p_acs['county'] == int(county_id))
-                if tract is not None:
-                    h_ind = logical_and(h_ind, h_acs['tract'] == int(tract_id))
-                    p_ind = logical_and(p_ind, p_acs['tract'] == int(tract_id))
+            if tract is not None:
+                h_ind = logical_and(h_ind, h_acs['tract'] == int(tract_id))
+                p_ind = logical_and(p_ind, p_acs['tract'] == int(tract_id))
             h_acs = h_acs[h_ind]
             p_acs = p_acs[p_ind]
             
+        # define the categories as {(category_name, category_value): corresponding_column_in_marginals}
         self.h_acs_cat = cat.categorize(h_acs, {
             ("HHsize", "one"):    "HH1p",
             ("HHsize", "two"):    "HH2p", 
-            ("HHsize", "three"):    "HH3p",
-            ("HHsize", "four"):    "HH4p",
-            ("HHsize", "five"):    "HH5p",
+            ("HHsize", "three"):  "HH3p",
+            ("HHsize", "four"):   "HH4p",
+            ("HHsize", "five"):   "HH5p",
             ("HHsize", "six"):    "HH6p",
-            ("HHsize", "seven+"):    "HH7p",
+            ("HHsize", "seven+"): "HH7p",
             }, index_cols=['state', 'county', 'tract', 'block group'])
         
         self.p_acs_cat = cat.categorize(p_acs, {
@@ -209,6 +212,8 @@ class Starter:
                 #return "one"
             #return "none"
 
+        # HS
+        # functions defining how category values are computed from the PUMA data
         def HHsize_cat(r):
             if r.HHSz == 1:
                 return "one"
@@ -267,7 +272,7 @@ class Starter:
             #if r.SEX == 1:
                 #return "male"
             #return "female"
-# HS
+        # HS
         def age_cat(r):
             if r.AgeGrp == 1:
                 return "category 1"

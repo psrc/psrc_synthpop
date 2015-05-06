@@ -213,10 +213,10 @@ class Census:
 
         if county is None:
             try:
-                return getattr(us.states, state).fips
+                return getattr(us.states, state).fips, None
             except:
                 pass
-            return state
+            return state, None
 
         try:
             return df.loc[(state, county)]
