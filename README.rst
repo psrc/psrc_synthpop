@@ -6,8 +6,11 @@ This is a python package that contains PSRC-specfic modifications to the SynthPo
 **Requirements:**
 
 1. Install the Synthicity's package: https://github.com/synthicity/synthpop
-2. Obtain a key from the US Census Bureau by registering at
+
+#. Obtain a key from the US Census Bureau by registering at
 http://api.census.gov/data/key_signup.html
-3. Set the environmental variable CENSUS to that key.
- 
+
+#. Set the environmental variable CENSUS to that key.
+
+
 Use the script synthesize.py to run the synthesizer. It uses marginals and PUMA data from the data sub-directory. When updating those data and/or creating new categories, modify the script psrc_synthpop/starter.py appropriately. 
