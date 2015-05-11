@@ -6,10 +6,7 @@ This is a python package that contains PSRC-specfic modifications to the SynthPo
 **Requirements:**
 
 1. Install the Synthicity's package: https://github.com/synthicity/synthpop
-
-#. Obtain a key from the US Census Bureau by registering at
-http://api.census.gov/data/key_signup.html
-
+#. Obtain a key from the US Census Bureau by registering at http://api.census.gov/data/key_signup.html
 #. Set the environmental variable CENSUS to that key.
 
 
