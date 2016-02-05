@@ -1,4 +1,4 @@
-import census
+import census 
 import pandas as pd
 import numpy as np
 import us
@@ -9,26 +9,24 @@ class Census:
 
     def __init__(self, key):
         self.c = census.Census(key)
-        self.pums_relationship_file_url = "http://www2.census.gov/geo/docs/" \
-                                          "maps-data/data/rel/2010_"\
-                                          "Census_Tract_to_2010_PUMA.txt"
+        self.base_url = "https://s3-us-west-2.amazonaws.com/synthpop-data/"
+        self.pums_relationship_file_url = self.base_url + "tract10_to_puma.csv"
         self.pums_relationship_df = None
-        self.base_url = "http://paris.urbansim.org/data/pums/"
-        self.pums_population_base_url = \
-            self.base_url + "puma_p_%s_%s.csv"
-        self.pums_household_base_url = \
-            self.base_url + "puma_h_%s_%s.csv"
+        self.pums10_population_base_url = \
+            r"data\PUMs2014\puma10_p_%s_%s.csv"
+        self.pums10_household_base_url = \
+            r"data\PUMs2014\puma10_h_%s_%s.csv"
+        self.pums00_population_base_url = \
+            r"data\PUMs2014\puma00_p_%s_%s.csv"
+        self.pums00_household_base_url = \
+            r"data\PUMs2014\puma00_h_%s_%s.csv"
         self.pums_population_state_base_url = \
             self.base_url + "puma_p_%s.csv"
         self.pums_household_state_base_url = \
             self.base_url + "puma_h_%s.csv"
-        self.fips_url = "http://www2.census.gov/geo/docs/reference/codes/files/" \
-                        "national_county.txt"
+        self.fips_url = self.base_url + "national_county.txt"
         self.fips_df = None
         self.pums_cache = {}
-        # HS
-        self.Housing_Pums = pd.read_csv('data/HHsample.csv') 
-        self.Person_Pums = pd.read_csv('data/Personsample.csv')        
 
     # df1 is the disaggregate data frame (e.g. block groups)
     # df2 is the aggregate data frame (e.g. tracts)
@@ -59,15 +57,16 @@ class Census:
                            tract=tract, year=year)
 
     def tract_query(self, census_columns, state, county, tract=None,
-                    year=None, id=None):
-        if id is None:
-            id = "*"
+                    year=None):
+        if tract is None:
+            tract = "*"
         return self._query(census_columns, state, county,
-                           forstr="tract:%s" % id,
-                           tract=None, year=year)
+                           forstr="tract:%s" % tract,
+                           year=year)
 
     def _query(self, census_columns, state, county, forstr,
                tract=None, year=None):
+        print year
         c = self.c
 
         state, county = self.try_fips_lookup(state, county)
@@ -127,10 +126,11 @@ class Census:
         if self.pums_relationship_df is None:
             self.pums_relationship_df = \
                 pd.read_csv(self.pums_relationship_file_url, dtype={
-                    "STATEFP": "object",
-                    "COUNTYFP": "object",
-                    "TRACTCE": "object",
-                    "PUMA5CE": "object"
+                    "statefp": "object",
+                    "countyfp": "object",
+                    "tractce": "object",
+                    "puma10_id": "object",
+                    "puma00_id": "object",
                 })
         return self.pums_relationship_df
 
@@ -138,88 +138,82 @@ class Census:
         if self.fips_df is None:
             self.fips_df = pd.read_csv(
                 self.fips_url,
-                #dtype={
-                #    "State ANSI": "object",
-                #    "County ANSI": "object"
-                #},
-                header=None,
-                names=['state', 'state_fips','county_fips','county','note'], 
-                dtype={1:object,2:object}, 
-                #index_col=["State",
-                #           "County Name"]
-                index_col=["state",
-                           "county"]                
+                dtype={
+                    "State ANSI": "object",
+                    "County ANSI": "object"
+                },
+                index_col=["State",
+                           "County Name"]
             )
-            #del self.fips_df["ANSI Cl"]
-            #for attr in ['state_fips','county_fips', 'note']:
-            del self.fips_df['note']
-                                       
+            del self.fips_df["ANSI Cl"]
         return self.fips_df
 
     def tract_to_puma(self, state, county, tract):
 
         state, county = self.try_fips_lookup(state, county)
 
-        #df = self._get_pums_relationship()
-        # HS
-        df = pd.read_csv("data/geocorrp.csv",
-                         names = ["COUNTYFP", "TRACTCE", "block_group", "STATEFP", "PUMA5CE", "stateabb", "county"],
-                         dtype={
-                             "STATEFP": "object",
-                             "COUNTYFP": "object",
-                             "TRACTCE": "object",
-                             "PUMA5CE": "object"
-                         })
-                         
-        q = "STATEFP == '%s' and COUNTYFP == '%s' and TRACTCE == '%s'" % \
+        df = self._get_pums_relationship()
+        q = "statefp == '%s' and countyfp == '%s' and tractce == '%s'" % \
             (state, county, tract)
         r = df.query(q)
-        return r["PUMA5CE"].values[0]
+        return r["puma10_id"].values[0], r["puma00_id"].values[0]
 
     def _read_csv(self, loc):
         if loc not in self.pums_cache:
-            self.pums_cache[loc] = pd.read_csv(loc, dtype={
-                                               "PUMA10": "object",
-                                               "ST": "object"
-                                               })
+            pums_df = pd.read_csv(loc, dtype={
+                "PUMA10": "object",
+                "PUMA00": "object",
+                "ST": "object"
+            })
+            pums_df = pums_df.rename(columns={
+                'PUMA10': 'puma10',
+                'PUMA00': 'puma00',
+                'SERIALNO': 'serialno'
+            })
+            self.pums_cache[loc] = pums_df
         return self.pums_cache[loc]
 
-    def download_population_pums(self, state, puma=None):
+    def download_population_pums(self, state, puma10=None, puma00=None):
+        print puma10, puma00
         state = self.try_fips_lookup(state)
-        if puma is None:
-            # HS 
-            return self.Person_Pums
-            #return self._read_csv(self.pums_population_state_base_url % (state))
-        # HS
-        qString = "PUMANO == %s" %(puma)
-        p = self.Person_Pums.query(qString).reset_index()
-        return p        
-        #return self._read_csv(self.pums_population_base_url % (state, puma))
+        if (puma10 is None) & (puma00 is None):
+            return self._read_csv(self.pums_population_state_base_url % (state))
+        pums = self._read_csv(self.pums10_population_base_url % (state, puma10))
+        if puma00 is not None:
+            pums00 = self._read_csv(self.pums00_population_base_url % (state, puma00))
+            pums = pd.concat([pums, pums00], ignore_index=True)
+        return pums
 
-    def download_household_pums(self, state, puma=None):
+    def download_household_pums(self, state, puma10=None, puma00=None):
         state = self.try_fips_lookup(state)
-        if puma is None:
-            # HS
-            return self.Housing_Pums
-            #return self._read_csv(self.pums_household_state_base_url % (state))
-        # HS
-        qStringH = "PUMANO == %s" %(puma)
-        h = self.Housing_Pums.query(qStringH).reset_index()
-        return h
-        #return self._read_csv(self.pums_household_base_url % (state, puma))
+        if (puma10 is None) & (puma00 is None):
+            return self._read_csv(self.pums_household_state_base_url % (state))
+        pums = self._read_csv(self.pums10_household_base_url % (state, puma10))
+        if puma00 is not None:
+            pums00 = self._read_csv(
+                self.pums00_household_base_url % (state, puma00))
+            pums = pd.concat([pums, pums00], ignore_index=True)
+
+        # filter out gq and empty units (non-hh records)
+        pums = pums[(pums.RT == 'H') & (pums.NP > 0) & (pums.TYPE == 1)]
+
+        return pums
+        
 
     def try_fips_lookup(self, state, county=None):
         df = self._get_fips_lookup()
 
         if county is None:
             try:
-                return getattr(us.states, state).fips, None
+                return getattr(us.states, state).fips
             except:
                 pass
-            return state, None
+            return state
 
         try:
             return df.loc[(state, county)]
         except:
             pass
         return state, county
+
+test = Census('ee9cf82317fe0a1a9362c5c24f21fdb1534aaf65')

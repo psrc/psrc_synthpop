@@ -1,35 +1,34 @@
+
+# coding: utf-8
+
 from psrc_synthpop.starter import Starter
-from synthpop.synthesizer import synthesize_all, enable_logging
-import os
+from synthpop.synthesizer import synthesize_all
 import pandas as pd
+import os
+import sys
 
-def synth_test():
-    starter = Starter(os.environ["CENSUS"], "WA", "King County")
-    ind = pd.Series(["53", "33", "100", "2006"], index=["state", "county", "tract", "block group"])
-    households, persons, fit = synthesize_all(starter, indexes=[ind])
-    pass
+#state_abbr = sys.argv[1]
+#county_name = sys.argv[2]
 
+state_abbr = 53
+county_name = 33
+starter = Starter(os.environ["CENSUS"], state_abbr, county_name)
 
-def synthesize_region(num_geogs=None):
-    starter = Starter(os.environ["CENSUS"], "WA")
-    households, persons, fit = synthesize_all(starter, num_geogs=num_geogs)
-    return (households, persons)
+if len(sys.argv) > 3:
+    state, county, tract, block_group = sys.argv[3:]
 
-# for testing purposes, this will limit the number of geographies processed
-# (the whole region can take a long time to run)
-num_geogs = None # set it to a small integer for a test run
-num_geogs = 20
+    indexes = [pd.Series(
+        [state, county, tract, block_group],
+        index=["state", "county", "tract", "block group"])]
+else:
+    indexes = None
 
-# synthesize one county
-#starter = Starter(os.environ["CENSUS"], "WA", "Kitsap County")
-#hhs, pers, fit = synthesize_all(starter, num_geogs=num_geogs)
+households, people, fit_quality = synthesize_all(starter, indexes=indexes)
 
-# synthesize the whole region
-hhs, pers = synthesize_region(num_geogs=num_geogs)
-
-# write results into csv files
-del hhs['HHsize'] # redundant column
-del pers['age'] # redundant column
-hhs.to_csv('households.csv', index=False)
-pers.to_csv('persons.csv', index=False)
-
+for geo, qual in fit_quality.items():
+    print 'Geography: {} {} {} {}'.format(
+        geo.state, geo.county, geo.tract, geo.block_group)
+    # print '    household chisq: {}'.format(qual.household_chisq)
+    # print '    household p:     {}'.format(qual.household_p)
+    print '    people chisq:    {}'.format(qual.people_chisq)
+    print '    people p:        {}'.format(qual.people_p)
