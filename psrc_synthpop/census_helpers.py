@@ -174,7 +174,7 @@ class Census:
         return self.pums_cache[loc]
 
     def download_population_pums(self, state, puma10=None, puma00=None):
-        print puma10, puma00
+        print 'puma10: %s, puma00: %s' % (puma10, puma00)
         state = self.try_fips_lookup(state)
         if (puma10 is None) & (puma00 is None):
             return self._read_csv(self.pums_population_state_base_url % (state))
@@ -216,4 +216,3 @@ class Census:
             pass
         return state, county
 
-test = Census('ee9cf82317fe0a1a9362c5c24f21fdb1534aaf65')

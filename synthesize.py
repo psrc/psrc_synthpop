@@ -10,8 +10,14 @@ import sys
 #state_abbr = sys.argv[1]
 #county_name = sys.argv[2]
 
+#control_totals = pd.read_csv(r'D:\Stefan\synthpop_2014\psrc_synthpop\data\OFM_Data2014.csv', dtype={'county': 'str', 'tract' : 'str', 'state' : 'str', 'block_group' : 'str'})
+#control_totals['block group'] = control_totals['block_group']
+#control_totals.drop('block_group', axis=1, inplace = True)
+
+
 state_abbr = 53
 county_name = 33
+#starter = Starter(os.environ["CENSUS"],control_totals, state_abbr, county_name)
 starter = Starter(os.environ["CENSUS"], state_abbr, county_name)
 
 if len(sys.argv) > 3:

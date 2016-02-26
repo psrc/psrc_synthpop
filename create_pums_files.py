@@ -1,7 +1,8 @@
 import pandas as pd
 
-hh_pums = pd.DataFrame.from_csv('D:\Stefan\synthicity\psrc_synthpop\data\ss14hwa.csv', index_col = None)
-p_pums = pd.DataFrame.from_csv('D:\Stefan\synthicity\psrc_synthpop\data\ss14pwa.csv', index_col = None)
+hh_pums = pd.DataFrame.from_csv('Z:\Stefan\synthicity\psrc_synthpop\data\ss14hwa.csv', index_col = None)
+p_pums = pd.DataFrame.from_csv('Z:\Stefan\synthicity\psrc_synthpop\data\ss14pwa.csv', index_col = None)
+
 
 #data_set_list = {"puma00_p_%s_%s.csv" : p_pums, "puma10_h_%s_%s.csv"}
 #cols = ['puma00', 'puma10']

@@ -3,6 +3,8 @@ from psrc_synthpop.census_helpers import Census
 import pandas as pd
 import numpy as np
 
+
+# TODO DOCSTRINGS!!
 class Starter:
     """
     This is a recipe for getting the marginals and joint distributions to use
@@ -41,12 +43,12 @@ class Starter:
         self.tract = tract
 
         income_columns = ['B19001_0%02dE' % i for i in range(1, 18)]
-        hh_size_columns = ['B11016_0%02dE' % i for i in range(1, 17)]
         vehicle_columns = ['B08201_0%02dE' % i for i in range(1, 7)]
         workers_columns = ['B08202_0%02dE' % i for i in range(1, 6)]
         families_columns = ['B11001_001E', 'B11001_002E']
-        block_group_columns = income_columns + families_columns + hh_size_columns 
-        tract_columns = vehicle_columns + workers_columns
+        hh_size_columns = ['B25009_0%02dE' % i for i in range(1, 18)]
+        block_group_columns = income_columns + families_columns
+        tract_columns = vehicle_columns + workers_columns + hh_size_columns
         h_acs = c.block_group_and_tract_query(
             block_group_columns, tract_columns, state, county,
             merge_columns=['tract', 'county', 'state'],
@@ -56,8 +58,8 @@ class Starter:
         h_acs.to_csv('d:/acs_households.csv')
 
         self.h_acs_cat = cat.categorize(h_acs, {
-            #("children", "yes"): "B11001_002E",
-            #("children", "no"): "B11001_001E - B11001_002E",
+            ("children", "yes"): "B11001_002E",
+            ("children", "no"): "B11001_001E - B11001_002E",
             ("income", "lt15"): "B19001_002E + B19001_003E",
             ("income", "gt15-lt30"): "B19001_004E + B19001_005E + B19001_006E",
             ("income", "gt30-lt60"): "B19001_007E + B19001_008E + B19001_009E + B19001_010E + B19001_011E",
@@ -66,57 +68,39 @@ class Starter:
             ("cars", "none"): "B08201_002E",
             ("cars", "one"): "B08201_003E",
             ("cars", "two or more"): "B08201_004E + B08201_005E + B08201_006E",
-            ("hh_size", "one"): "B11016_010E",
-            ("hh_size", "two"): "B11016_003E + B11016_011E",
-            ("hh_size", "three"): "B11016_004E + B11016_012E",
-            ("hh_size", "four"): "B11016_005E + B11016_013E",
-            ("hh_size", "five"): "B11016_006E + B11016_014E",
-            ("hh_size", "six"): "B11016_007E + B11016_015E",
-            ("hh_size", "seven or more"): "B11016_008E + B11016_016E",
+            ("workers", "none"): "B08202_002E",
+            ("workers", "one"): "B08202_003E",
+            ("workers", "two or more"): "B08202_004E + B08202_005E",
+            ("hh_size", "one"): "B25009_003E + B25009_011E",
+            ("hh_size", "two"): "B25009_004E + B25009_012E",
+            ("hh_size", "three"): "B25009_005E + B25009_013E",
+            ("hh_size", "four"): "B25009_006E + B25009_014E",
+            ("hh_size", "five"): "B25009_007E + B25009_015E",
+            ("hh_size", "six"): "B25009_008E + B25009_016E",
+            ("hh_size", "seven or more"): "B25009_009E + B25009_017E"
         }, index_cols=['state', 'county', 'tract', 'block group'])
 
         population = ['B01001_001E']
-        sex = ['B01001_001E','B01001_002E', 'B01001_026E']
+        sex = ['B01001_002E', 'B01001_026E']
         race = ['B02001_0%02dE' % i for i in range(1, 11)]
         male_age_columns = ['B01001_0%02dE' % i for i in range(3, 26)]
         female_age_columns = ['B01001_0%02dE' % i for i in range(27, 50)]
-        work_status_columns = ['B17004_0%02dE' % i for i in range(1, 20)]
-        group_quarters = ['B26001_001E']
-        block_group_columns2 = population + sex + race + male_age_columns + \
-            female_age_columns 
-        tract_columns2 = work_status_columns + group_quarters
-        #p_acs = c.block_group_query(all_columns, state, county, tract=tract)
-        p_acs = c.block_group_and_tract_query(
-            block_group_columns2, tract_columns2, state, county,
-            merge_columns=['tract', 'county', 'state'],
-            block_group_size_attr='B01001_001E',
-            tract_size_attr='B17004_001E',
-            tract=tract)
-        p_acs.to_csv('D:/p_acs_022416.csv')
+        all_columns = population + sex + race + male_age_columns + \
+            female_age_columns
+        p_acs = c.block_group_query(all_columns, state, county, tract=tract)
+        p_acs.to_csv('d:/acs_persons.csv')
 
         self.p_acs_cat = cat.categorize(p_acs, {
-            ("age", "19 and under"): (
-                "B01001_003E + B01001_004E + B01001_005E + "
-                "B01001_006E + B01001_007E + B01001_027E + "
-                "B01001_028E + B01001_029E + B01001_030E + "
-                "B01001_031E"),
-            ("age", "20 to 35"): "B01001_008E + B01001_009E + B01001_010E + "
-                                 "B01001_011E + B01001_012E + B01001_032E + "
-                                 "B01001_033E + B01001_034E + B01001_035E + "
-                                 "B01001_036E",
-            ("age", "35 to 60"): "B01001_013E + B01001_014E + B01001_015E + "
-                                 "B01001_016E + B01001_017E + B01001_037E + "
-                                 "B01001_038E + B01001_039E + B01001_040E + "
-                                 "B01001_041E",
-            ("age", "above 60"): "B01001_018E + B01001_019E + B01001_020E + "
-                                 "B01001_021E + B01001_022E + B01001_023E + "
-                                 "B01001_024E + B01001_025E + B01001_042E + "
-                                 "B01001_043E + B01001_044E + B01001_045E + "
-                                 "B01001_046E + B01001_047E + B01001_048E + "
-                                 "B01001_049E",
-            ("work_status", "non-worker"): "B17004_006E + B17004_010E + B17004_015E + B17004_019E",
-            ("work_status", "part-time"): "B17004_005E + B17004_009E + B17004_014E + B17004_018E",
-            ("work_status", "full-time"): "B17004_004E + B17004_008E + B17004_013E + B17004_017E",
+            ("age", "Under 5"): "B01001_003E + B01001_027E",
+            ("age", "5 to 9"): "B01001_004E + B01001_028E",
+            ("age", "10 to 14"): "B01001_005E + B01001_029E",
+            ("age", "15 to 17"): "B01001_006E + B01001_030E",
+            ("age", "18 to 24"): "B01001_007E + B01001_008E + B01001_009E + B01001_010E +  B01001_031E + B01001_032E + B01001_033E + B01001_034E",
+            ("age", "25 to 34"): "B01001_011E + B01001_012E + B01001_035E + B01001_036E",
+            ("age", "35 to 49"): "B01001_013E + B01001_014E + B01001_015E + B01001_037E + B01001_038E + B01001_039E",
+            ("age", "50 to 64"): "B01001_016E + B01001_017E + B01001_018E + B01001_019E + B01001_040E + B01001_041E + B01001_042E + B01001_043E",
+            ("age", "65 to 79"): "B01001_020E + B01001_021E + B01001_022E + B01001_023E + B01001_044E + B01001_045E + B01001_046E + B01001_047E",
+            ("age", "above 80"): "B01001_024E + B01001_025E + B01001_048E + B01001_049E",
             #("race", "white"):   "B02001_002E",
             #("race", "black"):   "B02001_003E",
             #("race", "asian"):   "B02001_005E",
@@ -161,21 +145,6 @@ class Starter:
             elif r.VEH == 1:
                 return "one"
             return "two or more"
-        
-        def hh_size_cat(r):
-            if r.NP == 1:
-                return "one"
-            elif r.NP == 2:
-                return "two"
-            elif r.NP == 3:
-                return "three"
-            elif r.NP == 4:
-                return "four"
-            elif r.NP == 5:
-                return "five"
-            elif r.NP == 6:
-                return "six"
-            return "seven or more"
 
         def children_cat(r):
             if r.NOC > 0:
@@ -200,12 +169,28 @@ class Starter:
                 return "two or more"
             elif r.WIF == 1:
                 return "one"
-
             return "none"
+
+        def hh_size_cat(r):
+            if r.NP == 1:
+                return "one"
+            elif r.NP == 2:
+                return "two"
+            elif r.NP == 3:
+                return "three"
+            elif r.NP == 4:
+                return "four"
+            elif r.NP == 5:
+                return "five"
+            elif r.NP == 6:
+                return "six"
+            return "seven or more"
+
         h_pums, jd_households = cat.joint_distribution(
             h_pums,
             cat.category_combinations(self.h_acs_cat.columns),
-            {"hh_size": hh_size_cat, "cars" : cars_cat, "income" : income_cat}
+            {"cars": cars_cat, "children": children_cat,
+             "income": income_cat, "workers": workers_cat, "hh_size": hh_size_cat}
         )
         return h_pums, jd_households
 
@@ -220,41 +205,43 @@ class Starter:
             p_pums = self.c.download_population_pums(ind.state, puma10, None)
 
         def age_cat(r):
-            if r.AGEP <= 19:
-                return "19 and under"
-            elif r.AGEP <= 35:
-                return "20 to 35"
-            elif r.AGEP <= 60:
-                return "35 to 60"
-            return "above 60"
+            if r.AGEP < 5:
+                return "under 5"
+            elif r.AGEP < 10:
+                return "5 to 9"
+            elif r.AGEP < 15:
+                return "10 to 14"
+            elif r.AGEP < 18:
+                return "15 to 17"
+            elif r.AGEP < 25:
+                return "18 to 24"
+            elif r.AGEP < 35:
+                return "25 to 34"
+            elif r.AGEP < 50:
+                return "35 to 49"
+            elif r.AGEP < 65:
+                return "50 to 64"
+            elif r.AGEP < 80:
+                return "65 to 79"
+            return "above 80"
 
-        def race_cat(r):
-            if r.RAC1P == 1:
-                return "white"
-            elif r.RAC1P == 2:
-                return "black"
-            elif r.RAC1P == 6:
-                return "asian"
-            return "other"
+        #def race_cat(r):
+        #    if r.RAC1P == 1:
+        #        return "white"
+        #    elif r.RAC1P == 2:
+        #        return "black"
+        #    elif r.RAC1P == 6:
+        #        return "asian"
+        #    return "other"
 
         def sex_cat(r):
             if r.SEX == 1:
                 return "male"
             return "female"
-        
-        def work_status_cat(r):
-            if r.WKHP >=35 and r.WKW < 3:
-                return "full-time"
-            elif r.WKHP != r.WKHP:
-                return "non-worker"
-            elif r.WKW == 6:
-                "non-worker"
-            return "part-time"
-
 
         p_pums, jd_persons = cat.joint_distribution(
             p_pums,
             cat.category_combinations(self.p_acs_cat.columns),
-            {"sex": sex_cat, 'age' : age_cat, 'work_status' : work_status_cat}
+            {"age": age_cat, "sex": sex_cat}
         )
         return p_pums, jd_persons
