@@ -4,13 +4,13 @@ from psrc_synthpop.weight_acs_variables import *
 import pandas as pd
 import numpy as np
 import pickle
-
+import os
 
 # TODO DOCSTRINGS!!
 class Starter:
     """
-    This is a recipe for getting the marginals and joint distributions to use
-    to pass to the synthesizer using simple categories - population, age,
+    This is a recipe for getting the marginals and  distributions to use
+    to pass to the synthesizer using simple categorjointies - population, age,
     race, and sex for people, and children, income, cars, and workers for
     households.  This module is responsible for
 
@@ -40,81 +40,92 @@ class Starter:
     tract_to_puma_map : dictionary
         keys are tract ids and pumas are puma ids
     """
-    def __init__(self, key, control_totals, state, county, tract=None):
+    def __init__(self, key, control_totals, acs_ouput_dir, hh_size_2010, state, county, tract=None):
         self.c = c = Census(key)
         self.state = state
         self.county = county
         self.tract = tract
-        self.income_adjustment_factors = {1094136 : (1.007624 * 1.08585701), 1071861 : (1.018237 * 1.05266344), 1041654 : (1.010207 * 1.03112956),                                           1024037 : (1.007549 * 1.01636470), 1008425 : (1.008425 * 1.00000000)}
+        self.income_adjustment_factors = {1094136 : (1.007624 * 1.08585701), 1071861 : (1.018237 * 1.05266344), 1041654 : (1.010207 * 1.03112956), 
+                                          1024037 : (1.007549 * 1.01636470), 1008425 : (1.008425 * 1.00000000)}
 
         income_columns = ['B19001_0%02dE' % i for i in range(1, 18)]
+        #hh_size_columns = ['B11016_0%02dE' % i for i in range(1, 17)]
         vehicle_columns = ['B08201_0%02dE' % i for i in range(1, 7)]
         workers_columns = ['B08202_0%02dE' % i for i in range(1, 6)]
-        families_columns = ['B11001_001E', 'B11001_002E']
-        hh_size_columns = ['B25009_0%02dE' % i for i in range(1, 18)]
-        block_group_columns = income_columns + families_columns
-        tract_columns = vehicle_columns + workers_columns + hh_size_columns
+        families_columns = ['B11001_001E', 'B11001_002E', 'B11001_007E']
+        block_group_columns = income_columns + families_columns 
+        tract_columns = vehicle_columns + workers_columns
         h_acs = c.block_group_and_tract_query(
             block_group_columns, tract_columns, state, county,
             merge_columns=['tract', 'county', 'state'],
             block_group_size_attr="B11001_001E",
             tract_size_attr="B08201_001E",
             tract=tract)
+       
         h_acs = h_acs.merge(control_totals, how ='left', on = ['state', 'county', 'tract', 'block group'])
-        f = open(r'D:\Stefan\synthpop_2014\h_acs.pickle', 'w')
-        pickle.dump(h_acs, f)
-        f.close()
+        h_acs = h_acs.merge(hh_size_2010, how ='left', on = ['state', 'county', 'tract', 'block group'])
         h_acs_cat = cat.categorize(h_acs, {
             ("totals", 'total households'): ('households'),
-            #("children", "yes"): "B11001_002E",
-            #("children", "no"): "B11001_001E - B11001_002E",
-            ("income", "lt35"): "B19001_002E + B19001_003E + B19001_004E + "
-                                "B19001_005E + B19001_006E + B19001_007E",
-            ("income", "gt35-lt100"): "B19001_008E + B19001_009E + "
-                                      "B19001_010E + B19001_011E + B19001_012E"
-                                      "+ B19001_013E",
-            ("income", "gt100"): "B19001_014E + B19001_015E + B19001_016E"
-                                 "+ B19001_017E",
-            ("cars", "none"): "B08201_002E",
-            ("cars", "one"): "B08201_003E",
-            ("cars", "two or more"): "B08201_004E + B08201_005E + B08201_006E",
-            #("workers", "none"): "B08202_002E",
-            #("workers", "one"): "B08202_003E",
-            #("workers", "two or more"): "B08202_004E + B08202_005E",
-            ("hh_size", "one"): "B25009_003E + B25009_011E",
-            ("hh_size", "two"): "B25009_004E + B25009_012E",
-            ("hh_size", "three"): "B25009_005E + B25009_013E",
-            ("hh_size", "four"): "B25009_006E + B25009_014E",
-            ("hh_size", "five"): "B25009_007E + B25009_015E",
-            ("hh_size", "six"): "B25009_008E + B25009_016E",
-            ("hh_size", "seven or more"): "B25009_009E + B25009_017E"
+            ("family", "is_family"): "B11001_002E",
+            ("family", "not_family"): "B11001_007E",
+            ("workers", "none"): "B08202_002E",
+            ("workers", "one"): "B08202_003E",
+            ("workers", "two or more"): "B08202_004E + B08202_005E",
+            ("income", "lt15"): "B19001_002E + B19001_003E",
+            ("income", "gt15-lt30"): "B19001_004E + B19001_005E + B19001_006E",
+            ("income", "gt30-lt60"): "B19001_007E + B19001_008E + B19001_009E + B19001_010E + B19001_011E",
+            ("income", "gt60-lt100"): "B19001_012E + B19001_013E",
+            ("income", "gt100"): "B19001_014E + B19001_015E + B19001_016E + B19001_017E",
+            ("cars", "no_car"): "B08201_002E",
+            ("cars", "one_car"): "B08201_003E",
+            ("cars", "two_or_more_cars"): "B08201_004E + B08201_005E + B08201_006E",
+            ("hh_size", "one"): "HH1p",
+            ("hh_size", "two"): "HH2p",
+            ("hh_size", "three"): "HH3p",
+            ("hh_size", "four"): "HH4p",
+            ("hh_size", "five"): "HH5p",
+            ("hh_size", "six"): "HH6p",
+            ("hh_size", "seven or more"): "HH7p",
         }, index_cols=['state', 'county', 'tract', 'block group'])
-        #f = open(r'D:\Stefan\synthpop_2014\h_acs.pickle', 'w')
-        #pickle.dump(h_acs_cat, f)
-        #f.close()
-        self.h_acs_cat = weight_samples(h_acs_cat, ['income', 'cars', 'hh_size'], 'total households')
-        f = open(r'D:\Stefan\synthpop_2014\h_acs2.pickle', 'w')
+        
+        self.h_acs_cat = weight_samples(h_acs_cat, ['workers', 'family', 'income', 'cars', 'hh_size'], 'total households')
+        
+        # Save the ACS data to compare to results:
+        print('''
+The current working directory is
+{0}
+'''.format(os.getcwd()))
+        
+        f = open(os.getcwd() + '/' +  acs_ouput_dir + 'h_acs_cat_' + str(county) + '.pickle' , 'wb')
         pickle.dump(self.h_acs_cat, f)
         f.close()
 
         population = ['B01001_001E']
-        sex = ['B01001_002E', 'B01001_026E']
+        sex = ['B01001_001E','B01001_002E', 'B01001_026E']
         race = ['B02001_0%02dE' % i for i in range(1, 11)]
         male_age_columns = ['B01001_0%02dE' % i for i in range(3, 26)]
         female_age_columns = ['B01001_0%02dE' % i for i in range(27, 50)]
-        all_columns = population + sex + race + male_age_columns + \
-            female_age_columns
-        p_acs = c.block_group_query(all_columns, state, county, tract=tract)
+        work_status_columns = ['B17004_0%02dE' % i for i in range(1, 20)]
+        school_enrollment_columns = ['B14001_001E', 'B14001_002E', 'B14001_010E']
+        group_quarters = ['B26001_001E']
+        block_group_columns2 = population + sex + race + male_age_columns + \
+            female_age_columns 
+        tract_columns2 = work_status_columns + group_quarters + school_enrollment_columns + ['B01003_001E']
+       
+        p_acs = c.block_group_and_tract_query(
+            block_group_columns2, tract_columns2, state, county,
+            merge_columns=['tract', 'county', 'state'],
+            block_group_size_attr='B01001_001E',
+            tract_size_attr='B01003_001E',
+            tract=tract)
         
         #Merge the control totals dataframe to p_acs:
         p_acs = p_acs.merge(control_totals, how ='left', on = ['state', 'county', 'tract', 'block group'])
-        f = open(r'D:\Stefan\synthpop_2014\p_acs.pickle', 'w')
-        pickle.dump(p_acs, f)
-        f.close()
         
-        # The first category below is for weighting based on control totals
         p_acs_cat = cat.categorize(p_acs, {
             ("totals", 'total pop'): ('pop_no_gq'),
+            ("school_enrollment", "yes_school") : ("B14001_002E"),
+            ("school_enrollment", "no_school") : ("B01001_001E - B14001_002E"),
             ("age", "19 and under"): (
                 "B01001_003E + B01001_004E + B01001_005E + "
                 "B01001_006E + B01001_007E + B01001_027E + "
@@ -134,23 +145,17 @@ class Starter:
                                  "B01001_043E + B01001_044E + B01001_045E + "
                                  "B01001_046E + B01001_047E + B01001_048E + "
                                  "B01001_049E",
-            #("race", "white"):   "B02001_002E",
-            #("race", "black"):   "B02001_003E",
-            #("race", "asian"):   "B02001_005E",
-            #("race", "other"):   "B02001_004E + B02001_006E + B02001_007E + "
-            #                     "B02001_008E",
             ("sex", "male"):     "B01001_002E",
             ("sex", "female"):   "B01001_026E"
         }, index_cols=['state', 'county', 'tract', 'block group'])
-        #f = open(r'D:\Stefan\synthpop_2014\p_acs.pickle', 'w')
-        #pickle.dump(p_acs_cat, f)
-        #f.close()
-        self.p_acs_cat = weight_samples(p_acs_cat, ['age', 'sex'], 'total pop')
-        print self.p_acs_cat.columns
-        print 'here'
-        #f = open(r'D:\Stefan\synthpop_2014\p_acs2.pickle', 'w')
-        #pickle.dump(self.p_acs_cat, f)
-        #f.close()
+        
+        self.p_acs_cat = weight_samples(p_acs_cat, ['school_enrollment', 'age', 'sex'], 'total pop')
+        
+        # Save the ACS data to compare to results:
+        f = open(os.getcwd() + '/' + acs_ouput_dir + 'p_acs_cat_' + str(county) + '.pickle' , 'wb')
+        pickle.dump(self.p_acs_cat, f)
+        f.close()
+
     def get_geography_name(self):
         # this synthesis is at the block group level for most variables
         return "block_group"
@@ -182,29 +187,39 @@ class Starter:
 
         def cars_cat(r):
             if r.VEH == 0:
-                return "none"
+                return "no_car"
             elif r.VEH == 1:
-                return "one"
-            return "two or more"
+                return "one_car"
+            return "two_or_more_cars"
 
         def children_cat(r):
             if r.NOC > 0:
-                return "yes"
-            return "no"
+                return "have_children"
+            return "no_children"
+
+        def family_cat(r):
+            if r.HHT > 0 and r.HHT<=3:
+                return "is_family"
+            elif r.HHT > 3:
+                return "not_family"
 
         def income_cat(r):
-            if r.INCP > 100000:
+            adj_factor = self.income_adjustment_factors[r.ADJINC]
+            income = r.HINCP * adj_factor
+            if income > 100000:
                 return "gt100"
-            elif r.FINCP > 35000:
-                return "gt35-lt100"
-            return "lt35"
+            elif income > 60000:
+                return "gt60-lt100"
+            elif income > 30000:
+                return "gt30-lt60"
+            elif income > 15000:
+                return "gt15-lt30"
+            return "lt15"
 
         def workers_cat(r):
-            if r.WIF == 3:
+            if r.num_workers >= 2:
                 return "two or more"
-            elif r.WIF == 2:
-                return "two or more"
-            elif r.WIF == 1:
+            elif r.num_workers == 1:
                 return "one"
             return "none"
 
@@ -226,7 +241,7 @@ class Starter:
         h_pums, jd_households = cat.joint_distribution(
             h_pums,
             cat.category_combinations(self.h_acs_cat.columns),
-            {"cars": cars_cat, "income": income_cat, "workers": workers_cat, "hh_size": hh_size_cat, "children" : children_cat}
+            {"workers" : workers_cat, "cars": cars_cat, "income": income_cat, "hh_size": hh_size_cat, "family" : family_cat, "children" : children_cat}
         )
         return h_pums, jd_households
 
@@ -248,6 +263,12 @@ class Starter:
             elif r.AGEP <= 60:
                 return "35 to 60"
             return "above 60"
+        
+        def school_enrollment_cat(r):
+            if r.SCH > 1:
+                return "yes_school"
+            else:
+                return "no_school"
 
         def race_cat(r):
             if r.RAC1P == 1:
@@ -263,9 +284,18 @@ class Starter:
                 return "male"
             return "female"
 
+        def work_status_cat(r):
+            if r.WKHP >=35 and r.WKW < 3:
+                return "full-time"
+            elif r.WKHP != r.WKHP:
+                return "non-worker"
+            elif r.WKW == 6:
+                "non-worker"
+            return "part-time"
+
         p_pums, jd_persons = cat.joint_distribution(
             p_pums,
             cat.category_combinations(self.p_acs_cat.columns),
-            {"age": age_cat, "race": race_cat, "sex": sex_cat}
+            {"school_enrollment" : school_enrollment_cat, "age" : age_cat, "sex": sex_cat,}
         )
         return p_pums, jd_persons

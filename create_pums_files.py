@@ -1,9 +1,13 @@
 import pandas as pd
 import numpy as np
-# This script prepares the PUMs file to be read by SynthPop- Creates a household and person file for each 2000 and 2010 PUM Geography.
+# This script prepares the PUMs file to be read by SynthPop- Creates indiviudal household and person files for each 2000 and 2010 PUM Geography.
 
-hh_pums = pd.DataFrame.from_csv('D:\Stefan\synthicity\psrc_synthpop\data\ss14hwa.csv', index_col = None)
-p_pums = pd.DataFrame.from_csv('D:\Stefan\synthicity\psrc_synthpop\data\ss14pwa.csv', index_col = None)
+# Location of the state wide PUMs file:
+input_pums_dir = 'R:/SynthPop2014/PUMs2014/'
+output_dir = 'D:/Stefan/synthpop_2014/psrc_synthpop/data/PUMs2014/'
+
+hh_pums = pd.DataFrame.from_csv(input_pums_dir + 'ss14hwa.csv', index_col = None)
+p_pums = pd.DataFrame.from_csv(input_pums_dir + 'ss14pwa.csv', index_col = None)
 
 # PUMs Housholds do not have a good number of workers variable. Define is_worker in the person file and then sum up for each household. Then Join as a new
 # variable to the househld file.  
@@ -27,10 +31,10 @@ for id in id_list:
     
     if len(str(id))==4:
         id = '0%s' % (id)
-    hh_df.to_csv(r'D:\Stefan\synthpop_2014\psrc_synthpop\data\PUMs2014\puma00_h_%s_%s.csv' % (53, id), index_col = False)
-    pers_df.to_csv(r'D:\Stefan\synthpop_2014\psrc_synthpop\data\PUMs2014\puma00_p_%s_%s.csv' % (53, id), index_col = False)
+    hh_df.to_csv(output_dir + 'puma00_h_%s_%s.csv' % (53, id), index_col = False)
+    pers_df.to_csv(output_dir + 'puma00_p_%s_%s.csv' % (53, id), index_col = False)
 
-#Split out the 2000 geography from the PUMs file
+#Split out the 2010 geography from the PUMs file
 df_2010_hh = hh_pums.loc[(hh_pums['PUMA10'] > 0)]
 df_2010_pers = p_pums.loc[(p_pums['PUMA10'] > 0)]
 id_list = list(set(df_2010_hh['PUMA10'].tolist()))
@@ -41,5 +45,5 @@ for id in id_list:
     if len(str(id))==4:
         id = '0%s' % (id)
     
-    hh_df.to_csv(r'D:\Stefan\synthpop_2014\psrc_synthpop\data\PUMs2014\puma10_h_%s_%s.csv' % (53, id), index_col = False)
-    pers_df.to_csv(r'D:\Stefan\synthpop_2014\psrc_synthpop\data\PUMs2014\puma10_p_%s_%s.csv' % (53, id), index_col = False)
+    hh_df.to_csv(output_dir + 'puma10_h_%s_%s.csv' % (53, id), index_col = False)
+    pers_df.to_csv(output_dir + 'puma10_p_%s_%s.csv' % (53, id), index_col = False)
