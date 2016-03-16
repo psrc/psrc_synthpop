@@ -65,7 +65,7 @@ hh_marginals.county = hh_marginals.county.astype('int64')
 hh_marginals['block group'] = hh_marginals['block group'].astype('int64')
 
 hh_marginals.set_index(['state', 'county', 'tract', 'block group'], inplace = True)
-hh_marginals_hh_size = hh_marginals[['seven or more', 'six', 'five', 'four', 'three', 'two']]
+hh_marginals_hh_size = hh_marginals[['seven or more', 'six', 'five', 'four', 'three', 'two',]]
 
 person_vars = ['race', 'school_enrollment']
 hh_vars = ['cars', 'hh_size', 'family', 'income', 'cat_id', 'state', 'county', 'tract', 'block group']

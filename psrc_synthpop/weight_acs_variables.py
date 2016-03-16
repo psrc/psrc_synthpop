@@ -8,17 +8,22 @@ def weight_samples (df, level_names, totals_col):
         orig_cols = df[level_name].columns
         print 'here!!!!!'
         df[level_name, level_name + '_total'] =  df[level_name].sum(1)
-        if level_name == 'hh_size':
-            df['hh_size', 'increase'] = df['hh_size', 'seven or more'] * .05
-            print df['hh_size', 'increase']
-            df['hh_size', 'seven or more'] = df['hh_size', 'seven or more'] + df['hh_size', 'increase'] 
-            df['hh_size', 'hh_size_total'] = df['hh_size', 'hh_size_total'] + df['hh_size', 'increase'] 
-            df['hh_size', 'increase'] = 0
-            df  = df.drop('increase', axis = 1, level=1)
+        #if level_name == 'hh_size':
+        #    df['hh_size', 'increase'] = df['hh_size', 'seven or more'] * .1
+        #    print df['hh_size', 'increase']
+        #    df['hh_size', 'seven or more'] = df['hh_size', 'seven or more'] + df['hh_size', 'increase'] 
+        #    df['hh_size', 'hh_size_total'] = df['hh_size', 'hh_size_total'] + df['hh_size', 'increase'] 
+        #    df['hh_size', 'increase'] = 0
+        #    df  = df.drop('increase', axis = 1, level=1)
         # get the proportions for each category
         for col_name in orig_cols:
-            df[level_name, col_name + '_p'] = df[level_name, col_name] /  df[level_name, level_name + '_total'] 
-            df[level_name, col_name] = df[level_name, col_name + '_p'] * df['totals', totals_col]
+            df[level_name, col_name + '_p'] = df[level_name, col_name].astype('float') /  df[level_name, level_name + '_total'].astype('float')
+            if totals_col == 'total pop': 
+                print 'here'
+                df[level_name, col_name] = df[level_name, col_name + '_p'] * df['totals', totals_col] 
+            else:
+                print 'and here'
+                df[level_name, col_name] = df[level_name, col_name + '_p'] * df['totals', totals_col] 
             df[level_name, col_name] = df[level_name, col_name].fillna(0)
         # Drop the temp columns
         for col in df[level_name].columns:
