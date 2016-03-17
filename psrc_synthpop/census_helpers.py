@@ -13,13 +13,13 @@ class Census:
         self.pums_relationship_file_url = self.base_url + "tract10_to_puma.csv"
         self.pums_relationship_df = None
         self.pums10_population_base_url = \
-            r"data\PUMs2014\puma10_p_%s_%s.csv"
+            r"pums_data\puma10_p_%s_%s.csv"
         self.pums10_household_base_url = \
-            r"data\PUMs2014\puma10_h_%s_%s.csv"
+            r"pums_data\puma10_h_%s_%s.csv"
         self.pums00_population_base_url = \
-            r"data\PUMs2014\puma00_p_%s_%s.csv"
+            r"pums_data\puma00_p_%s_%s.csv"
         self.pums00_household_base_url = \
-            r"data\PUMs2014\puma00_h_%s_%s.csv"
+            r"pums_data\puma00_h_%s_%s.csv"
         self.pums_population_state_base_url = \
             self.base_url + "puma_p_%s.csv"
         self.pums_household_state_base_url = \
@@ -27,7 +27,7 @@ class Census:
         self.fips_url = self.base_url + "national_county.txt"
         self.fips_df = None
         self.pums_cache = {}
-
+        print self.pums10_population_base_url
     # df1 is the disaggregate data frame (e.g. block groups)
     # df2 is the aggregate data frame (e.g. tracts)
     # need to scale down df2 variables to df1 level totals

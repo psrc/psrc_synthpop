@@ -1,10 +1,18 @@
 import pandas as pd
 import numpy as np
+import os
+
 # This script prepares the PUMs file to be read by SynthPop- Creates indiviudal household and person files for each 2000 and 2010 PUM Geography.
 
 # Location of the state wide PUMs file:
-input_pums_dir = 'R:/SynthPop2014/PUMs2014/'
-output_dir = 'D:/Stefan/synthpop_2014/psrc_synthpop/data/PUMs2014/'
+input_pums_dir = 'R:/SynthPop2014/data/'
+output_dir = 'pums_data'
+
+
+
+if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
 
 hh_pums = pd.DataFrame.from_csv(input_pums_dir + 'ss14hwa.csv', index_col = None)
 p_pums = pd.DataFrame.from_csv(input_pums_dir + 'ss14pwa.csv', index_col = None)
@@ -31,8 +39,8 @@ for id in id_list:
     
     if len(str(id))==4:
         id = '0%s' % (id)
-    hh_df.to_csv(output_dir + 'puma00_h_%s_%s.csv' % (53, id), index_col = False)
-    pers_df.to_csv(output_dir + 'puma00_p_%s_%s.csv' % (53, id), index_col = False)
+    hh_df.to_csv(output_dir + '/' +'puma00_h_%s_%s.csv' % (53, id), index_col = False)
+    pers_df.to_csv(output_dir + '/' +  'puma00_p_%s_%s.csv' % (53, id), index_col = False)
 
 #Split out the 2010 geography from the PUMs file
 df_2010_hh = hh_pums.loc[(hh_pums['PUMA10'] > 0)]
@@ -45,5 +53,5 @@ for id in id_list:
     if len(str(id))==4:
         id = '0%s' % (id)
     
-    hh_df.to_csv(output_dir + 'puma10_h_%s_%s.csv' % (53, id), index_col = False)
-    pers_df.to_csv(output_dir + 'puma10_p_%s_%s.csv' % (53, id), index_col = False)
+    hh_df.to_csv(output_dir + '/' + 'puma10_h_%s_%s.csv' % (53, id), index_col = False)
+    pers_df.to_csv(output_dir + '/' + 'puma10_p_%s_%s.csv' % (53, id), index_col = False)

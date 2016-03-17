@@ -3,9 +3,16 @@ from synthpop.synthesizer import synthesize_all
 import pandas as pd
 import os
 import sys
+import create_pums_files
 
-input_dir = 'data/'
+input_dir = 'R:/SynthPop2014/data/'
+pums_dir = 'data/'
 output_dir = 'results/'
+
+if not os.path.exists('results'):
+        os.makedirs('results')
+
+
 
 control_totals = pd.read_csv(input_dir + 'OFM_Data2014.csv', dtype={'county': 'str', 'tract' : 'str', 'state' : 'str', 'block_group' : 'str'})
 control_totals['block group'] = control_totals['block_group']
